@@ -7,7 +7,7 @@
 
 ## 需求
 
-- **Ubuntu/Debian**：執行 `./build.sh` 時會先檢查編譯環境；若為全新安裝，腳本會詢問 sudo 密碼並安裝必要套件（build-essential、cmake、ninja-build、git、curl、pkg-config），並可選擇自動 clone/bootstrap [vcpkg](https://vcpkg.io/)。
+- **Ubuntu/Debian**：執行 `./build.sh` 時會先檢查編譯環境；若為全新安裝，腳本會詢問 sudo 密碼並安裝必要套件（build-essential、cmake、ninja-build、git、curl、pkg-config、zip、unzip、tar、autoconf、automake、libtool、libssl-dev），並可選擇自動 clone/bootstrap [vcpkg](https://vcpkg.io/)。
 - 若已具備環境，可設 `SKIP_ENV_CHECK=1` 略過檢查。
 - 可選：`jq`（用於解析 GitHub API，否則用 grep 取得最新 tag）
 
@@ -79,6 +79,26 @@ zgate-sdk-c-builder/
 ```
 
 `work/`、`output/`、產出的 `zgate-sdk-c-*/` 與 `*.log` 等由 `.gitignore` 排除，不納入版控。
+
+## 故障排除：vcpkg install failed
+
+若出現 `vcpkg install failed` 或 `failed to git show versions/baseline.json`，請依序執行：
+
+```bash
+# 1. 補齊 vcpkg 完整 git 歷史（解決 baseline 錯誤）
+cd "$VCPKG_ROOT"   # 或 cd ~/vcpkg
+git fetch --unshallow
+
+# 2. 安裝 vcpkg 依賴編譯所需套件（libsodium 需 autoconf，tlsuv 需 OpenSSL 標頭）
+sudo apt-get install -y autoconf automake libtool libssl-dev
+
+# 3. 清除失敗的 build 後重跑
+cd ~/zgate-sdk-c-builder
+rm -rf output/zgate-sdk-c-*/build
+./build.sh
+```
+
+詳細錯誤可查看：`output/zgate-sdk-c-<version>/build/vcpkg-manifest-install.log`。
 
 ## 版控
 

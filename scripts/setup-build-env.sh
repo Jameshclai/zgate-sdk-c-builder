@@ -17,7 +17,7 @@ fi
 
 echo "==> Checking build environment..."
 
-# Required commands for fetch + patch + build
+# Required commands for fetch + patch + build (zip/unzip/tar needed by vcpkg bootstrap)
 REQUIRED=(
     git
     curl
@@ -27,6 +27,8 @@ REQUIRED=(
     g++
     pkg-config
     zip
+    unzip
+    tar
 )
 # Optional (improve experience)
 OPTIONAL=(jq)
@@ -49,7 +51,7 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
     echo ""
     echo "To install on Ubuntu/Debian, run (will ask for sudo password):"
     echo "  sudo apt-get update"
-    echo "  sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config zip"
+    echo "  sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config zip unzip tar autoconf automake libtool libssl-dev"
     echo ""
     read -r -p "Install missing packages now? [y/N] " ans
     if [[ "${ans,,}" = "y" || "${ans,,}" = "yes" ]]; then
@@ -60,7 +62,7 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
             exit 1
         fi
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config zip
+        sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config zip unzip tar autoconf automake libtool libssl-dev
         if ! command -v jq &>/dev/null; then
             read -r -p "Install optional jq for GitHub API? [y/N] " jq_ans
             if [[ "${jq_ans,,}" = "y" || "${jq_ans,,}" = "yes" ]]; then
@@ -86,7 +88,7 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
     exit 1
 fi
 
-echo "    Build tools: OK (git, curl, cmake, ninja, gcc, g++, pkg-config, zip)"
+echo "    Build tools: OK (git, curl, cmake, ninja, gcc, g++, pkg-config, zip, unzip, tar)"
 
 # Check vcpkg (required for ci-linux-x64 preset)
 VCPKG_ROOT="${VCPKG_ROOT:-}"
@@ -113,6 +115,11 @@ if [[ ! -d "${VCPKG_ROOT}" ]] || [[ ! -x "${VCPKG_ROOT}/vcpkg" ]]; then
             git clone --depth 1 https://github.com/microsoft/vcpkg.git "${VCPKG_ROOT}"
             (cd "${VCPKG_ROOT}" && ./bootstrap-vcpkg.sh -disableMetrics)
         fi
+        # Fetch full history so vcpkg baseline (versions/baseline.json) resolves correctly
+        if (cd "${VCPKG_ROOT}" && git rev-parse --is-shallow-repository 2>/dev/null) | grep -q true; then
+            echo "    Fetching vcpkg full history (for baseline)..."
+            (cd "${VCPKG_ROOT}" && git fetch --unshallow)
+        fi
         echo "    vcpkg ready at ${VCPKG_ROOT}"
         echo "    Consider adding to config.env: export VCPKG_ROOT=${VCPKG_ROOT}"
     else
@@ -121,6 +128,11 @@ if [[ ! -d "${VCPKG_ROOT}" ]] || [[ ! -x "${VCPKG_ROOT}/vcpkg" ]]; then
     fi
 else
     echo "    vcpkg: OK (${VCPKG_ROOT})"
+    # Ensure full history so vcpkg baseline resolves (avoids "failed to git show versions/baseline.json")
+    if (cd "${VCPKG_ROOT}" && git rev-parse --is-shallow-repository 2>/dev/null) | grep -q true; then
+        echo "    Fetching vcpkg full history (for baseline)..."
+        (cd "${VCPKG_ROOT}" && git fetch --unshallow)
+    fi
 fi
 
 # Write VCPKG_ROOT so parent build.sh can source it (needed when we just cloned vcpkg)
