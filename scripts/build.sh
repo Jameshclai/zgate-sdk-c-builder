@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Configure and build zgate-sdk-c in ZGATE_OUT using local tlsuv.
+# Copyright (c) eCloudseal Inc.  All rights reserved.  Author: Lai Hou Chang (James Lai)
 # Expects: ZGATE_OUT (or OUTPUT_DIR + ZITI_SDK_VERSION), TLSUV_SRC (optional), VCPKG_ROOT (optional)
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

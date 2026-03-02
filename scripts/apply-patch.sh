@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Copy ziti-sdk-c to zgate-sdk-c-{version}, apply renames and content replacement.
+# Copyright (c) eCloudseal Inc.  All rights reserved.  Author: Lai Hou Chang (James Lai)
 # Expects: ZITI_SRC, TLSUV_SRC, ZITI_SDK_VERSION, OUTPUT_DIR (from fetch-latest or env)
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,7 +11,7 @@ if [[ -f "${BUILDER_ROOT}/config.env" ]]; then
     source "${BUILDER_ROOT}/config.env"
     set +a
 fi
-OUTPUT_DIR="${OUTPUT_DIR:-/home/user}"
+OUTPUT_DIR="${OUTPUT_DIR:-${BUILDER_ROOT}/output}"
 if [[ -z "${ZITI_SRC:-}" ]] || [[ -z "${ZITI_SDK_VERSION:-}" ]]; then
     echo "Error: ZITI_SRC and ZITI_SDK_VERSION must be set (run fetch-latest.sh first or source it)." >&2
     exit 1
@@ -20,6 +21,7 @@ VER="${ZITI_SDK_VERSION}"
 OUT="${OUTPUT_DIR}/zgate-sdk-c-${VER}"
 echo "==> Applying patch: ${ZITI_SRC} -> ${OUT}"
 
+mkdir -p "${OUTPUT_DIR}"
 rm -rf "${OUT}"
 cp -a "${ZITI_SRC}" "${OUT}"
 rm -rf "${OUT}/.git" "${OUT}/.github" 2>/dev/null || true

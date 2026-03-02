@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Fetch latest (or pinned) ziti-sdk-c and tlsuv from GitHub, clone to WORK_DIR.
+# Copyright (c) eCloudseal Inc.  All rights reserved.  Author: Lai Hou Chang (James Lai)
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BUILDER_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
