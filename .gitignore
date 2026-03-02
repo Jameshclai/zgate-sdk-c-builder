@@ -1,0 +1,15 @@
+# Build and download artifacts
+work/
+downloads/
+build/
+*.log
+.env
+
+# Output: generated zgate-sdk-c versions (if kept inside builder)
+zgate-sdk-c-*/
+
+# IDE / OS
+.idea/
+.DS_Store
+*.swp
+*~
