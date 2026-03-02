@@ -77,9 +77,11 @@ sed -i 's/DESCRIPTION "OpenZiti C SDK"/DESCRIPTION "ZGate C SDK"/' "${OUT}/CMake
 sed -i 's|HOMEPAGE_URL "https://github.com/openziti/ziti-sdk-c"|HOMEPAGE_URL "https://github.com/ecloudseal/zgate-sdk-c"|' "${OUT}/CMakeLists.txt"
 sed -i 's|/opt/openziti/ziti-sdk|/opt/zgate/zgate-sdk|g' "${OUT}/CMakeLists.txt"
 sed -i 's|cmake_install/ziti-sdk|cmake_install/zgate-sdk|g' "${OUT}/CMakeLists.txt"
-# Non-Windows else block: add CMAKE_INSTALL_LIBDIR and INCLUDEDIR before set(CMAKE_INSTALL_PREFIX /opt/zgate/
-if ! grep -A1 '^else()' "${OUT}/CMakeLists.txt" | grep -q 'CMAKE_INSTALL_LIBDIR'; then
-    sed -i '/set(CMAKE_INSTALL_PREFIX \/opt\/zgate\/zgate-sdk/i\    set(CMAKE_INSTALL_LIBDIR lib)\n    set(CMAKE_INSTALL_INCLUDEDIR include)' "${OUT}/CMakeLists.txt"
+# Non-Windows else block: add CMAKE_INSTALL_LIBDIR and INCLUDEDIR so library install(DIRECTORY) has DESTINATION
+if ! grep -A3 '^else()' "${OUT}/CMakeLists.txt" | grep -q 'CMAKE_INSTALL_LIBDIR'; then
+    sed -i '/set(CMAKE_INSTALL_PREFIX \/opt\/zgate\/zgate-sdk/i\
+    set(CMAKE_INSTALL_LIBDIR lib)\
+    set(CMAKE_INSTALL_INCLUDEDIR include)' "${OUT}/CMakeLists.txt"
 fi
 
 # Version fallback in CMakeLists (when not from git) - insert BEFORE set(PROJECT_VERSION)

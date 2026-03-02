@@ -9,6 +9,7 @@ if [[ -f "${BUILDER_ROOT}/config.env" ]]; then
     source "${BUILDER_ROOT}/config.env"
     set +a
 fi
+export OUTPUT_DIR="${OUTPUT_DIR:-/home/user}"
 
 echo "==> Step 1: Fetch latest ziti-sdk-c and tlsuv"
 source "${BUILDER_ROOT}/scripts/fetch-latest.sh"

@@ -64,6 +64,10 @@ else
     git clone --depth 1 --branch "${TLSUV_TAG}" \
         https://github.com/openziti/tlsuv.git "${TLSUV_SRC}"
 fi
+# Ensure tlsuv working tree is populated (clone can leave it empty on some setups)
+if [[ -d "${TLSUV_SRC}/.git" ]] && [[ ! -f "${TLSUV_SRC}/CMakeLists.txt" ]]; then
+    (cd "${TLSUV_SRC}" && git checkout HEAD -- . 2>/dev/null || true)
+fi
 
 # Export for downstream scripts
 export ZITI_SDK_VERSION="${ZITI_VER}"
