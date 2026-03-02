@@ -26,6 +26,7 @@ REQUIRED=(
     gcc
     g++
     pkg-config
+    zip
 )
 # Optional (improve experience)
 OPTIONAL=(jq)
@@ -48,7 +49,7 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
     echo ""
     echo "To install on Ubuntu/Debian, run (will ask for sudo password):"
     echo "  sudo apt-get update"
-    echo "  sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config"
+    echo "  sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config zip"
     echo ""
     read -r -p "Install missing packages now? [y/N] " ans
     if [[ "${ans,,}" = "y" || "${ans,,}" = "yes" ]]; then
@@ -59,7 +60,7 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
             exit 1
         fi
         sudo apt-get update
-        sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config
+        sudo apt-get install -y build-essential cmake ninja-build git curl pkg-config zip
         if ! command -v jq &>/dev/null; then
             read -r -p "Install optional jq for GitHub API? [y/N] " jq_ans
             if [[ "${jq_ans,,}" = "y" || "${jq_ans,,}" = "yes" ]]; then
@@ -85,7 +86,7 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
     exit 1
 fi
 
-echo "    Build tools: OK (git, curl, cmake, ninja, gcc, g++, pkg-config)"
+echo "    Build tools: OK (git, curl, cmake, ninja, gcc, g++, pkg-config, zip)"
 
 # Check vcpkg (required for ci-linux-x64 preset)
 VCPKG_ROOT="${VCPKG_ROOT:-}"
