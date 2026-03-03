@@ -1,6 +1,6 @@
 # Release 1.0.3（正式版）
 
-**zgate-sdk-c-builder** 1.0.3：建置流程步驟說明與編譯產出位置列表，並強化環境與 vcpkg 相容性。
+**zgate-sdk-c-builder** 1.0.3：建置流程步驟說明與編譯產出位置列表，強化環境與 vcpkg 相容性，並支援 MinGW/Windows 交叉編譯與 tlsuv C89 相容 patch。
 
 ---
 
@@ -14,6 +14,12 @@
   - 【程式庫】所有 `.so`、`.a` 檔案路徑
   - 【可執行檔】programs 下所有可執行檔路徑
   - 【測試程式】tests 下所有可執行檔路徑
+
+### apply-patch：MinGW/Windows 相容性（1.0.3 後續更新）
+- **MinGW 標頭檔名**：Windows 下 MinGW 使用小寫標頭檔名，腳本對 `LMAPIbuf.h`、`VersionHelpers.h`、`WinSock2.h` 加入 `#if defined(__MINGW32__)` 條件編譯，分別改用 `lmapibuf.h`、`versionhelpers.h`、`winsock2.h`。
+- **zgate_log.h 巨集衝突**：在 `DEBUG_LEVELS(XX)` 前加入 `#ifdef _WIN32` 區塊，對 `ERROR`、`DEBUG`、`INFO`、`WARN`、`TRACE`、`VERBOSE` 執行 `#undef`，避免與 Windows 系統標頭巨集衝突。
+- **CMake MinGW 視為 WIN32**：`library/CMakeLists.txt` 與 tlsuv 的 CMake 在 `WIN32` 判斷外一併檢查 `CMAKE_C_COMPILER MATCHES "mingw32"`，使 MinGW 交叉編譯時正確連結 netapi32、crypt32、ncrypt 等並使用 win32 keychain。
+- **tlsuv C89 相容**：新增 `patches/tlsuv-keys-c89.patch`，於 apply-patch 階段自動套用，解決 MinGW 等編譯器在 C89 模式下於區塊中宣告變數的相容問題（如 `privkey_store_cert` 的 `subj_name` 等）。
 
 ### 環境與 vcpkg（1.0.2 後累積）
 - **zip / unzip / tar**：納入必備套件與 apt 安裝清單，滿足 vcpkg bootstrap 需求。
