@@ -145,6 +145,10 @@ printf '%s\nref: (not a git repo)\nhash: (none)\n' "${VER}" > "${OUT}/version.tx
 if [[ -f "${OUT}/library/CMakeLists.txt" ]]; then
     sed -i 's/^    if (WIN32)$/    if (WIN32 OR CMAKE_C_COMPILER MATCHES "mingw32")/' "${OUT}/library/CMakeLists.txt"
 fi
+# zgate.c: get_service_intercept 傳入 const zgate_service*，zgate_service_get_config 需 non-const，避免 -Wdiscarded-qualifiers
+if [[ -f "${OUT}/library/zgate.c" ]]; then
+    sed -i 's/zgate_service_get_config(s,/zgate_service_get_config((zgate_service *)s,/g' "${OUT}/library/zgate.c"
+fi
 # tlsuv：MinGW 時使用 win32 keychain 並連結 crypt32/ncrypt
 if [[ -n "${TLSUV_SRC:-}" ]] && [[ -d "${TLSUV_SRC}" ]] && [[ -f "${TLSUV_SRC}/CMakeLists.txt" ]]; then
     sed -i 's/elseif (WIN32)/elseif (WIN32 OR CMAKE_C_COMPILER MATCHES "mingw32")/' "${TLSUV_SRC}/CMakeLists.txt"

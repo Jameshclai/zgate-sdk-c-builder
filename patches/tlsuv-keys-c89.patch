@@ -1,8 +1,7 @@
 diff --git a/src/openssl/keys.c b/src/openssl/keys.c
-index 92ba452..3988d3a 100644
 --- a/src/openssl/keys.c
 +++ b/src/openssl/keys.c
-@@ -820,8 +820,18 @@ static int privkey_get_cert(tlsuv_private_key_t pk, tlsuv_certificate_t *cert) {
+@@ -820,8 +820,18 @@ static int privkey_get_cert(tlsuv_private_key_t pk, tlsuv_certificate_t *cert)
  
  static int privkey_store_cert(tlsuv_private_key_t pk, tlsuv_certificate_t cert) {
      struct priv_key_s *key = (struct priv_key_s *) pk;
