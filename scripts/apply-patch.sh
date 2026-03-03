@@ -73,6 +73,38 @@ find "${OUT}" -type f \( \
 sed -i 's|openzgate/tlsuv|openziti/tlsuv|g' "${OUT}/deps/CMakeLists.txt" 2>/dev/null || true
 sed -i 's|openzgate/sdk-golang|openziti/sdk-golang|g' "${OUT}/library/CMakeLists.txt" 2>/dev/null || true
 
+# Windows 主機或 MinGW 交叉編譯：MinGW 標頭為小寫 lmapibuf.h，MSVC 為 LMAPIbuf.h
+if [[ -f "${OUT}/library/sdk_info.c" ]]; then
+    sed -i 's|#include <LMAPIbuf.h>|#if defined(__MINGW32__)\n#include <lmapibuf.h>\n#else\n#include <LMAPIbuf.h>\n#endif|' "${OUT}/library/sdk_info.c"
+fi
+# MinGW 標頭檔名為小寫：VersionHelpers.h -> versionhelpers.h，WinSock2.h -> winsock2.h
+if [[ -f "${OUT}/library/posture.c" ]]; then
+    sed -i 's|#include <VersionHelpers.h>|#if defined(__MINGW32__)\n#include <versionhelpers.h>\n#else\n#include <VersionHelpers.h>\n#endif|' "${OUT}/library/posture.c"
+fi
+if [[ -f "${OUT}/includes/zgate/zgatelib.h" ]]; then
+    sed -i 's|#include <WinSock2.h>|#if defined(__MINGW32__)\n#include <winsock2.h>\n#else\n#include <WinSock2.h>\n#endif|' "${OUT}/includes/zgate/zgatelib.h"
+fi
+
+# MinGW/Windows：系統標頭會定義 ERROR/DEBUG/INFO 等巨集，與 zgate_log.h 的 enum 衝突，緊貼 DEBUG_LEVELS 前 undef
+LOG_H="${OUT}/includes/zgate/zgate_log.h"
+if [[ -f "${LOG_H}" ]] && ! grep -q 'undef DEBUG' "${LOG_H}"; then
+    awk '
+        /^#define DEBUG_LEVELS\(XX\)/ && !done {
+            print "// MinGW/Windows: system headers may define ERROR/DEBUG/INFO etc., undef to avoid conflict with enum"
+            print "#ifdef _WIN32"
+            print "#undef ERROR"
+            print "#undef DEBUG"
+            print "#undef INFO"
+            print "#undef WARN"
+            print "#undef TRACE"
+            print "#undef VERBOSE"
+            print "#endif"
+            done = 1
+        }
+        { print }
+    ' "${LOG_H}" > "${LOG_H}.tmp" && mv "${LOG_H}.tmp" "${LOG_H}"
+fi
+
 # ---- CMake: project, version, install path ----
 sed -i 's/project(ziti-sdk/project(zgate-sdk/' "${OUT}/CMakeLists.txt"
 sed -i 's/DESCRIPTION "OpenZiti C SDK"/DESCRIPTION "ZGate C SDK"/' "${OUT}/CMakeLists.txt"
@@ -108,6 +140,23 @@ fi
 
 # version.txt
 printf '%s\nref: (not a git repo)\nhash: (none)\n' "${VER}" > "${OUT}/version.txt"
+
+# SDK library：MinGW 交叉編譯時也連結 netapi32、使用 Windows 定義
+if [[ -f "${OUT}/library/CMakeLists.txt" ]]; then
+    sed -i 's/^    if (WIN32)$/    if (WIN32 OR CMAKE_C_COMPILER MATCHES "mingw32")/' "${OUT}/library/CMakeLists.txt"
+fi
+# tlsuv：MinGW 時使用 win32 keychain 並連結 crypt32/ncrypt
+if [[ -n "${TLSUV_SRC:-}" ]] && [[ -d "${TLSUV_SRC}" ]] && [[ -f "${TLSUV_SRC}/CMakeLists.txt" ]]; then
+    sed -i 's/elseif (WIN32)/elseif (WIN32 OR CMAKE_C_COMPILER MATCHES "mingw32")/' "${TLSUV_SRC}/CMakeLists.txt"
+    sed -i 's/^if(WIN32)$/if(WIN32 OR CMAKE_C_COMPILER MATCHES "mingw32")/' "${TLSUV_SRC}/CMakeLists.txt"
+fi
+# tlsuv: C89 相容（MinGW 等編譯器不支援區塊中宣告變數時，privkey_store_cert 的 subj_name 等會報 undeclared）
+if [[ -n "${TLSUV_SRC:-}" ]] && [[ -d "${TLSUV_SRC}" ]]; then
+    PATCH_FILE="${BUILDER_ROOT}/patches/tlsuv-keys-c89.patch"
+    if [[ -f "${PATCH_FILE}" ]]; then
+        (cd "${TLSUV_SRC}" && git apply --check "${PATCH_FILE}" 2>/dev/null && git apply "${PATCH_FILE}") || true
+    fi
+fi
 
 # deps: use local tlsuv when available (from fetch-latest)
 if [[ -n "${TLSUV_SRC:-}" ]] && [[ -d "${TLSUV_SRC}" ]]; then
