@@ -1,0 +1,50 @@
+--- a/src/openssl/keys.c
++++ b/src/openssl/keys.c
+@@ -820,8 +820,18 @@ static int privkey_get_cert(tlsuv_private_key_t pk, tlsuv_certificate_t *cert)
+ 
+ static int privkey_store_cert(tlsuv_private_key_t pk, tlsuv_certificate_t cert) {
+     struct priv_key_s *key = (struct priv_key_s *) pk;
+ 
+     p11_key_ctx *p11_key = NULL;
++    X509_STORE *store;
++    STACK_OF(X509_OBJECT) *objects;
++    X509_OBJECT *obj;
++    X509 *c;
++    unsigned char *subj_der = NULL;
++    int subjlen;
++    char *der = NULL;
++    int derlen;
++    int rc;
++
+     switch (EVP_PKEY_id(key->pkey)) {
+         case EVP_PKEY_EC:
+             p11_key = EC_KEY_get_ex_data(EVP_PKEY_get0_EC_KEY(key->pkey), p11_ec_idx);
+@@ -834,21 +844,14 @@ static int privkey_store_cert(tlsuv_private_key_t pk, tlsuv_certificate_t cert)
+     if (p11_key == NULL) {
+         return -1;
+     }
+-    X509_STORE *store = ((struct cert_s*)cert)->cert;
+-
+-    STACK_OF(X509_OBJECT) *objects = X509_STORE_get0_objects(store);
+-
+-    X509_OBJECT *obj = sk_X509_OBJECT_value(objects, 0);
+-    X509 *c = X509_OBJECT_get0_X509(obj);
+-
+-    X509_NAME *subj_name = X509_get_subject_name(c);
+-    unsigned char *subj_der = NULL;
+-    int subjlen = i2d_X509_NAME(subj_name, &subj_der);
+-
+-    char *der = NULL;
+-    int derlen = i2d_X509(c, (unsigned char **) &der);
+-
+-    int rc = p11_store_key_cert(p11_key, der, derlen, (char*)subj_der, subjlen);
++    store = ((struct cert_s*)cert)->cert;
++    objects = X509_STORE_get0_objects(store);
++    obj = sk_X509_OBJECT_value(objects, 0);
++    c = X509_OBJECT_get0_X509(obj);
++    subjlen = i2d_X509_NAME(X509_get_subject_name(c), &subj_der);
++    derlen = i2d_X509(c, (unsigned char **) &der);
++    rc = p11_store_key_cert(p11_key, der, derlen, (char*)subj_der, subjlen);
+ 
+     OPENSSL_free(der);
+     OPENSSL_free(subj_der);

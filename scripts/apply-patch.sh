@@ -155,10 +155,17 @@ if [[ -n "${TLSUV_SRC:-}" ]] && [[ -d "${TLSUV_SRC}" ]] && [[ -f "${TLSUV_SRC}/C
     sed -i 's/^if(WIN32)$/if(WIN32 OR CMAKE_C_COMPILER MATCHES "mingw32")/' "${TLSUV_SRC}/CMakeLists.txt"
 fi
 # tlsuv: C89 相容（MinGW 等編譯器不支援區塊中宣告變數時，privkey_store_cert 的 subj_name 等會報 undeclared）
+# 先嘗試既有 patch，再一律執行自動修正腳本，避免新版本 tlsuv 編譯錯誤
 if [[ -n "${TLSUV_SRC:-}" ]] && [[ -d "${TLSUV_SRC}" ]]; then
-    PATCH_FILE="${BUILDER_ROOT}/patches/tlsuv-keys-c89.patch"
-    if [[ -f "${PATCH_FILE}" ]]; then
-        (cd "${TLSUV_SRC}" && git apply --check "${PATCH_FILE}" 2>/dev/null && git apply "${PATCH_FILE}") || true
+    KEYS_C="${TLSUV_SRC}/src/openssl/keys.c"
+    for PATCH_FILE in "${BUILDER_ROOT}/patches/tlsuv-keys-c89-0.40.13.patch" "${BUILDER_ROOT}/patches/tlsuv-keys-c89.patch"; do
+        if [[ -f "${PATCH_FILE}" ]] && (cd "${TLSUV_SRC}" && git apply --check "${PATCH_FILE}" 2>/dev/null) && (cd "${TLSUV_SRC}" && git apply "${PATCH_FILE}"); then
+            break
+        fi
+    done
+    # 自動修正 keys.c：若仍有中段宣告則改為函數開頭宣告（適用任何 tlsuv 版本）
+    if [[ -f "${KEYS_C}" ]] && [[ -f "${BUILDER_ROOT}/scripts/fix-tlsuv-keys-c89.py" ]]; then
+        python3 "${BUILDER_ROOT}/scripts/fix-tlsuv-keys-c89.py" "${KEYS_C}" 2>/dev/null || true
     fi
 fi
 

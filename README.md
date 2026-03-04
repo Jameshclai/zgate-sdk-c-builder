@@ -21,7 +21,7 @@
 
 會依序執行：
 
-1. **setup-build-env.sh**：檢查編譯環境（git、curl、cmake、ninja、gcc、g++、pkg-config、vcpkg）；若缺少則詢問是否以 sudo 安裝套件，或自動 clone/bootstrap vcpkg
+1. **setup-build-env.sh**：檢查編譯環境（git、curl、cmake、ninja、gcc、g++、pkg-config、vcpkg）；若缺少會自動安裝（不詢問）；設定 `SUDO_PASS` 於 config.env 可完全非互動執行
 2. **fetch-latest.sh**：以 GitHub Releases API 取得兩 repo 最新 release tag，並 `git clone` 到 `work/`
 3. **apply-patch.sh**：將 ziti-sdk-c 複製到 `zgate-sdk-c-<version>` 並套用重新命名、內容替換與 CMake 調整，並使用本次下載的 tlsuv 路徑
 4. **build.sh**：在產出目錄執行 `cmake --preset ci-linux-x64` 與 `cmake --build build --config Release`
@@ -70,7 +70,7 @@ zgate-sdk-c-builder/
 ├── config.env.example
 ├── build.sh                 # 單一入口
 ├── scripts/
-│   ├── setup-build-env.sh   # 檢查/安裝編譯環境與套件（含 sudo 詢問）
+│   ├── setup-build-env.sh   # 檢查/安裝編譯環境與套件（缺少則自動安裝，不詢問）
 │   ├── fetch-latest.sh      # 取得並下載最新（或指定）版本
 │   ├── apply-patch.sh       # 套用 zgate patch
 │   ├── build.sh             # 編譯 zgate-sdk-c

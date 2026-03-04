@@ -5,13 +5,16 @@ downloads/
 build/
 *.log
 .env
+config.env
 .build-env.vcpkg
 
 # Output: generated zgate-sdk-c versions (if kept inside builder)
 zgate-sdk-c-*/
 
-# IDE / OS
+# IDE / OS / Python
 .idea/
 .DS_Store
 *.swp
 *~
+__pycache__/
+*.pyc
